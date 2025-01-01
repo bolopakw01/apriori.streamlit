@@ -8,8 +8,8 @@ import time
 
 # Set page configuration
 st.set_page_config(
-    page_title="Association",
-    page_icon="🛒",
+    page_title="Analyze App",
+    page_icon="📊",
     layout="wide"
 )
 
@@ -23,9 +23,26 @@ if not st.session_state.splash_shown:
     with splash.container():
         st.markdown("""
         <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;">
-            <h1 style="color: #FF4B4B; font-size: 3rem; font-weight: bold; text-align: center;">🏪Rekomendasi Keranjang Belanja🏬</h1>
-            <p style="font-size: 1.5rem; color: #6c757d; text-align: center;">Memuat aplikasi...</p>
+            <h1 style="color: #FF4B4B; font-size: 3rem; font-weight: bold; text-align: center;">🦾 Analyze App 📱</h1>
+            <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
+                <div class="loader"></div>
+            </div>
+            <p style="font-size: 1.5rem; color: #6c757d; text-align: center; margin-top: 20px;">Memuat aplikasi...</p>
         </div>
+        <style>
+            .loader {
+                border: 16px solid #f3f3f3;
+                border-top: 16px solid #FF4B4B;
+                border-radius: 50%;
+                width: 120px;
+                height: 120px;
+                animation: spin 2s linear infinite;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
         """, unsafe_allow_html=True)
         time.sleep(3)  # Durasi splash screen
 
@@ -86,7 +103,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # App title with
-st.header("App Analyze")
+st.header("Analyze App")
 st.subheader("Association Rule Learning - Apriori Algorithm")
 st.title("-----------------------------------------------------------")
 st.markdown("### 📊 Analisis Asosiasi Produk")
