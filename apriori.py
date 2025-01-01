@@ -298,3 +298,25 @@ with col7:
         st.write("Produk yang direkomendasikan untuk dibeli bersama:", recommended_items)
     else:
         st.write("Tidak ada rekomendasi produk yang ditemukan.")
+
+
+
+
+
+
+from time import sleep
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+options = webdriver.ChromeOptions()
+options.headless = True
+driver = webdriver.Chrome(options=options)
+URL = 'http://<ADDRESS>:<PORT>/'
+
+driver.get(URL)
+sleep(1)
+S = lambda X: driver.execute_script('return document.body.parentNode.scroll'+X)
+driver.set_window_size(S('Width'),S('Height'))
+                                                                                                            driver.find_element_by_tag_name('body').screenshot('screenshot.png')
+
+driver.quit()
