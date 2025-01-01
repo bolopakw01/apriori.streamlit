@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from mlxtend.frequent_patterns import association_rules, apriori
@@ -11,19 +10,25 @@ st.set_page_config(
     layout="wide"
 )
 
-# Splash screen
-splash = st.empty()  # Temporary container for the splash screen
-with splash.container():
-    st.markdown("""
-    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;">
-        <h1 style="color: #FF4B4B; font-size: 3rem; font-weight: bold; text-align: center;">🏪Rekomendasi Keranjang Belanja🏬</h1>
-        <p style="font-size: 1.5rem; color: #6c757d; text-align: center;">Memuat aplikasi...</p>
-    </div>
-    """, unsafe_allow_html=True)
-    time.sleep(3)  # Durasi splash screen
+# Check if splash screen has been shown
+if 'splash_shown' not in st.session_state:
+    st.session_state.splash_shown = False
 
-# Remove the splash screen after 3 seconds
-splash.empty()
+# Splash screen
+if not st.session_state.splash_shown:
+    splash = st.empty()  # Temporary container for the splash screen
+    with splash.container():
+        st.markdown("""
+        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;">
+            <h1 style="color: #FF4B4B; font-size: 3rem; font-weight: bold; text-align: center;">🏪Rekomendasi Keranjang Belanja🏬</h1>
+            <p style="font-size: 1.5rem; color: #6c757d; text-align: center;">Memuat aplikasi...</p>
+        </div>
+        """, unsafe_allow_html=True)
+        time.sleep(3)  # Durasi splash screen
+
+    # Remove the splash screen after 3 seconds
+    splash.empty()
+    st.session_state.splash_shown = True
 
 # Custom CSS
 st.markdown("""
@@ -79,7 +84,6 @@ st.markdown("""
 
 # App title with emoji
 st.markdown("# 🛒 Rekomendasi Keranjang Belanja")
-
 
 # Create columns for layout
 col1, col2 = st.columns([2, 1])
