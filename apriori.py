@@ -88,7 +88,7 @@ st.markdown("""
 # App title with
 st.header("App Analyze")
 st.subheader("Association Rule Learning - Apriori Algorithm")
-st.title("---------------------------------------------------")
+st.title("-----------------------------------------------------------")
 st.markdown("### 📊 Analisis Asosiasi Produk")
 
 
@@ -124,17 +124,18 @@ with st.expander("🔍 Filter Options", expanded=True):
                             ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
 
-day = st.select_slider('📅 Hari', 
-                    ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 
-                    value="Sat")
+# Change day selection to horizontal radio buttons
+days = st.radio('📅 Hari', 
+                ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 
+                index=5, horizontal=True)
 
 # Item selection with search
 ITEMS = ['Bread', 'Scandinavian', 'Hot chocolate', 'Jam', 'Cookies', 'Muffin', 'Coffee', 'Pastry', 'Medialuna', 'Tea', 'Tartine', 'Basket', 'Mineral water', 'Farm House', 'Fudge', 'Juice', "Ella's Kitchen Pouches", 'Victorian Sponge', 'Frittata', 'Hearty & Seasonal', 'Soup', 'Pick and Mix Bowls', 'Smoothies', 'Cake', 'Mighty Protein', 'Chicken sand', 'Coke', 'My-5 Fruit Shoot', 'Focaccia', 'Sandwich', 'Alfajores', 'Eggs', 'Brownie', 'Dulce de Leche', 'Honey', 'The BART', 'Granola', 'Fairy Doors', 'Empanadas', 'Keeping It Local', 'Art Tray', 'Bowl Nic Pitt', 'Bread Pudding', 'Adjustment', 'Truffles', 'Chimichurri Oil', 'Bacon', 'Spread', 'Kids biscuit', 'Siblings', 'Caramel bites', 'Jammie Dodgers', 'Tiffin', 'Olum & polenta', 'Polenta', 'The Nomad', 'Hack the stack', 'Bakewell', 'Lemon and coconut', 'Toast', 'Scone', 'Crepes', 'Vegan mincepie', 'Bare Popcorn', 'Muesli', 'Crisps', 'Pintxos', 'Gingerbread syrup', 'Panatone', 'Brioche and salami', 'Afternoon with the baker', 'Salad', 'Chicken Stew', 'Spanish Brunch', 'Raspberry shortbread sandwich', 'Extra Salami or Feta', 'Duck egg', 'Baguette', "Valentine's card", 'Tshirt', 'Vegan Feast', 'Postcard', 'Nomad bag', 'Chocolates', 'Coffee granules ', 'Drinking chocolate spoons ', 'Christmas common', 'Argentina Night', 'Half slice Monster ', 'Gift voucher', 'Cherry me Dried fruit', 'Mortimer', 'Raw bars', 'Tacos/Fajita']
 
-item = st.selectbox('🔎 Select Item', ITEMS, help="Select an item to analyze")
+item = st.selectbox('🔎 Pilih Produk', ITEMS, help="Select a Product to analyze")
 
 # Analysis functions remain the same
-def get_dataset(period_day='', weekday_weekend='', month='', day=''):
+def get_dataset(period_day='', weekday_weekend='', month='', days=''):
     data = df.copy()
     data["month"] = data["month"].astype(str)
     data["day"] = data["day"].astype(str)
@@ -142,7 +143,7 @@ def get_dataset(period_day='', weekday_weekend='', month='', day=''):
         (data["period_day"].str.contains(period_day)) &
         (data["weekday_weekend"].str.contains(weekday_weekend)) &
         (data["month"].str.contains(month.title())) &
-        (data["day"].str.contains(day.title()))
+        (data["day"].str.contains(days.title()))
     ]
     return filtered if filtered.shape[0] > 0 else "No Result"
 
@@ -150,7 +151,7 @@ def encode(x):
     return 1 if x >= 1 else 0
 
 # Process data
-data = get_dataset(period_day.lower(), weekday_weekend.lower(), month, day)
+data = get_dataset(period_day.lower(), weekday_weekend.lower(), month, days)
 
 if isinstance(data, pd.DataFrame):
     # Create pivot table
@@ -158,15 +159,25 @@ if isinstance(data, pd.DataFrame):
     item_count_pivot = item_count.pivot_table(index='Transaction', columns='Item', values='Count').fillna(0)
     item_count_pivot = item_count_pivot.applymap(encode)
     
-    # Generate rules
-    support = 0.01
-    frequent_items = apriori(item_count_pivot, min_support=support, use_colnames=True)
+    # Adjust these parameters for more accurate results
+    min_support = 0.01  # Increase minimum support
+    min_confidence = 0.3  # Add minimum confidence threshold
+    min_lift = 1.2  # Increase minimum lift threshold
+    
+    # Generate rules with stricter parameters
+    frequent_items = apriori(item_count_pivot, min_support=min_support, use_colnames=True)
     
     if len(frequent_items) > 0:
-        rules = association_rules(frequent_items, metric="lift", min_threshold=1, num_itemsets=len(frequent_items))
-        rules.sort_values('confidence', ascending=False, inplace=True)
+        # Fixed: Added num_itemsets parameter
+        rules = association_rules(frequent_items, metric="lift", min_threshold=min_lift, num_itemsets=len(frequent_items))
+        
+        # Apply minimum confidence filter
+        rules = rules[rules['confidence'] >= min_confidence]
+        
+        # Sort by confidence and lift
+        rules = rules.sort_values(['confidence', 'lift'], ascending=[False, False])
 
-        # Display recommendations in a nice card
+        # Display recommendations
         st.markdown("### 🎯 Hasil Rekomendasi")
         matching_rules = rules[rules['antecedents'].apply(lambda x: item in x)]
         
@@ -174,6 +185,7 @@ if isinstance(data, pd.DataFrame):
             consequent = list(matching_rules.iloc[0]['consequents'])[0]
             confidence = matching_rules.iloc[0]['confidence']
             lift = matching_rules.iloc[0]['lift']
+            support = matching_rules.iloc[0]['support']
             
             # Translate month and day to Indonesian
             month_translation = {
@@ -185,13 +197,22 @@ if isinstance(data, pd.DataFrame):
             }
             
             month_ind = month_translation.get(month, month)
-            day_ind = day_translation.get(day, day)
+            day_ind = day_translation.get(days, days)
             
+            # Add support percentage to the display
             st.markdown(f"""            
             <div class="success-message">
                 <h4>Dari data yang ada, Customer yang membeli <span style="color: #FF4B4B">{item}</span></h4>
                 <h3>Juga akan membeli <span style="color: #FF4B4B">{consequent}</span></h3>
+                <p>Support: {support*100:.2f}%</p>
+                <p>Confidence: {confidence*100:.2f}%</p>
                 <p>Lift Score: {lift:.2f}</p>
+                <p>Interpretasi:</p>
+                <ul>
+                    <li>Support {support*100:.2f}% menunjukkan frekuensi kemunculan kombinasi produk ini</li>
+                    <li>Confidence {confidence*100:.2f}% menunjukkan probabilitas pembelian {consequent} setelah membeli {item}</li>
+                    <li>Lift {lift:.2f} menunjukkan kekuatan hubungan antar produk (>1 berarti ada korelasi positif)</li>
+                </ul>
                 <p>Di hari <span style="color: #FF4B4B">{day_ind}</span> bulan <span style="color: #FF4B4B">{month_ind}</span>
                 customer yang membeli <span style="color: #FF4B4B">{item}</span> 
                 biasanya juga akan membeli <span style="color: #FF4B4B">{consequent}</span> 
@@ -199,43 +220,45 @@ if isinstance(data, pd.DataFrame):
             </div>
             """, unsafe_allow_html=True)
             
-            # Add visualization
+            # Visualization of top rules
             st.markdown("### 📈 Top Associated Items")
             top_rules = matching_rules.head(5)
             
+            # Create bar chart with both confidence and lift
             fig = go.Figure(data=[
-                go.Bar(
-                    x=[list(x)[0] for x in top_rules['consequents']],
-                    y=top_rules['confidence'],
-                    marker_color='#FF4B4B'
-                )
+                go.Bar(name='Confidence', 
+                    x=[list(x)[0] for x in top_rules['consequents']], 
+                    y=top_rules['confidence'].apply(lambda x: x*100),
+                    marker_color='#FF4B4B'),
+                go.Bar(name='Lift', 
+                    x=[list(x)[0] for x in top_rules['consequents']], 
+                    y=top_rules['lift'],
+                    marker_color='#4B4BFF')
             ])
             
             fig.update_layout(
-                title="Confidence Scores for Top Associations",
+                title="Confidence and Lift Scores for Top Associations",
                 xaxis_title="Associated Items",
-                yaxis_title="Confidence Score",
+                yaxis_title="Score",
+                barmode='group',
                 template="plotly_dark"
             )
             
             st.plotly_chart(fig, use_container_width=True)
+            
+            # Hide filter controls for analysis parameters
+            with st.sidebar.expander("Analysis Parameters", expanded=True):
+                min_support = st.slider("Minimum Support", 0.01, 0.5, min_support, 0.01)
+                min_confidence = st.slider("Minimum Confidence", 0.1, 1.0, min_confidence, 0.1)
+                min_lift = st.slider("Minimum Lift", 1.0, 5.0, min_lift, 0.1)
+            
         else:
-            st.warning("Tidak ada asosiasi kuat yang ditemukan untuk item ini")
+            st.warning("Tidak ada asosiasi kuat yang ditemukan untuk item ini dengan parameter yang dipilih")
     else:
-        st.warning("Tidak ada kumpulan item yang sering ditemukan dengan pada batas support saat ini.")
+        st.warning("Tidak ada kumpulan item yang sering ditemukan dengan parameter yang dipilih")
 else:
     st.error("Tidak ada data yang tersedia untuk filter yang dipilih")
-
-# Visualisasi distribusi transaksi per hari
-st.markdown("### 📊 Distribusi Transaksi per Hari")
-fig_day = px.histogram(df, x='day', title='Distribusi Transaksi per Hari')
-st.plotly_chart(fig_day, use_container_width=True)
-
-# Visualisasi distribusi transaksi per bulan
-st.markdown("### 📊 Distribusi Transaksi per Bulan")
-fig_month = px.histogram(df, x='month', title='Distribusi Transaksi per Bulan')
-st.plotly_chart(fig_month, use_container_width=True)
-
+    
 # Export data ke CSV
 if st.button('Export Hasil Analisis ke CSV'):
     csv = matching_rules.to_csv(index=False)
