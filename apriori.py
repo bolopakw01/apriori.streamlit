@@ -264,15 +264,20 @@ if st.button('Export Hasil Analisis ke CSV'):
     csv = matching_rules.to_csv(index=False)
     st.download_button(label="Download CSV", data=csv, file_name='hasil_analisis.csv', mime='text/csv')
 
-# Tampilkan detail item yang dipilih
-st.markdown("### 📋 Detail Item yang Dipilih")
-item_details = df[df['Item'] == item]
-st.write(item_details.describe())
+# Create columns for recommendations and item details
+col6, col7 = st.columns(2)
 
-# Rekomendasi produk
-st.markdown("### 🛒 Rekomendasi Produk")
-if not matching_rules.empty:
-    recommended_items = matching_rules['consequents'].explode().unique()
-    st.write("Produk yang direkomendasikan untuk dibeli bersama:", recommended_items)
-else:
-    st.write("Tidak ada rekomendasi produk yang ditemukan.")
+with col6:
+    # Tampilkan detail item yang dipilih
+    st.markdown("### 📋 Detail Item yang Dipilih")
+    item_details = df[df['Item'] == item]
+    st.write(item_details.describe())
+
+with col7:
+    # Rekomendasi produk
+    st.markdown("### 🛒 Rekomendasi Produk")
+    if not matching_rules.empty:
+        recommended_items = matching_rules['consequents'].explode().unique()
+        st.write("Produk yang direkomendasikan untuk dibeli bersama:", recommended_items)
+    else:
+        st.write("Tidak ada rekomendasi produk yang ditemukan.")
